@@ -42,6 +42,8 @@ export const registerMgtFileComponent = () => registerComponent('file', MgtFile)
  * @class MgtFile
  * @extends {MgtTemplatedComponent}
  *
+ * @fires {CustomEvent<undefined>} updated - Fired when the component is updated
+ *
  * @cssprop --file-type-icon-height - {Length} file type icon height. Default value is 28px.
  * @cssprop --file-border - {String} file item border style. Default value is "1px solid transparent".
  * @cssprop --file-border-radius - {String} the border radius of the file component. Default value is 4px.
@@ -342,13 +344,14 @@ export class MgtFile extends MgtTemplatedTaskComponent {
     }
 
     let fileIconSrc;
+    let fileType = '';
 
     if (this.fileIcon) {
       fileIconSrc = this.fileIcon;
     } else {
       // get file type extension from file name
       const re = /(?:\.([^.]+))?$/;
-      const fileType =
+      fileType =
         this.driveItem.package === undefined && this.driveItem.folder === undefined
           ? re.exec(this.driveItem.name)[1]
             ? re.exec(this.driveItem.name)[1].toLowerCase()
@@ -368,7 +371,7 @@ export class MgtFile extends MgtTemplatedTaskComponent {
         ${
           fileIconSrc
             ? html`
-              <img src=${fileIconSrc} alt="File icon" />
+              <img src=${fileIconSrc} alt="${fileType.toUpperCase()} File icon" />
             `
             : html`
               ${getSvg(SvgIcon.File)}

@@ -30,6 +30,7 @@ import { AvatarSize, IDynamicPerson, ViewType, viewTypeConverter } from '../../g
 import '../../styles/style-helper';
 import { registerFluentComponents } from '../../utils/FluentComponents';
 import { SvgIcon, getSvg } from '../../utils/SvgHelper';
+import { debounce } from '../../utils/Utils';
 import { IExpandable, IHistoryClearer } from '../mgt-person-card/types';
 import '../sub-components/mgt-flyout/mgt-flyout';
 import { MgtFlyout, registerMgtFlyoutComponent } from '../sub-components/mgt-flyout/mgt-flyout';
@@ -37,6 +38,7 @@ import { personCardConverter, type PersonCardInteraction } from './../PersonCard
 import { styles } from './mgt-person-css';
 import { AvatarType, MgtPersonConfig, avatarTypeConverter } from './mgt-person-types';
 import { strings } from './strings';
+import { getPersonCardGraphData } from '../mgt-person-card/mgt-person-card.graph';
 
 /**
  * Person properties part of original set provided by graph by default
@@ -73,6 +75,7 @@ export const registerMgtPersonComponent = () => {
  * @class MgtPerson
  * @extends {MgtTemplatedComponent}
  *
+ * @fires {CustomEvent<undefined>} updated - Fired when the component is updated
  * @fires {CustomEvent<IDynamicPerson>} line1clicked - Fired when line1 is clicked
  * @fires {CustomEvent<IDynamicPerson>} line2clicked - Fired when line2 is clicked
  * @fires {CustomEvent<IDynamicPerson>} line3clicked - Fired when line3 is clicked
@@ -506,6 +509,7 @@ export class MgtPerson extends MgtTemplatedTaskComponent {
 
   private _mouseLeaveTimeout = -1;
   private _mouseEnterTimeout = -1;
+  private _keyBoardFocus: { (): void; (): void };
 
   constructor() {
     super();
@@ -949,7 +953,7 @@ export class MgtPerson extends MgtTemplatedTaskComponent {
     }
 
     // if we have more than one line we add the second line
-    if (this.view !== 'oneline') {
+    if (!this.isOneLine()) {
       const text = this.getTextFromProperty(person, this.line2Property);
       if (this.hasTemplate('line2')) {
         // Render the line2 template
@@ -970,7 +974,7 @@ export class MgtPerson extends MgtTemplatedTaskComponent {
     }
 
     // if we have a third or fourth line we add the third line
-    if (this.view === 'threelines' || this.view === 'fourlines') {
+    if (this.isThreeLines() || this.isFourLines()) {
       const text = this.getTextFromProperty(person, this.line3Property);
       if (this.hasTemplate('line3')) {
         // Render the line3 template
@@ -991,7 +995,7 @@ export class MgtPerson extends MgtTemplatedTaskComponent {
     }
 
     // add the fourth line if necessary
-    if (this.view === 'fourlines') {
+    if (this.isFourLines()) {
       const text = this.getTextFromProperty(person, this.line4Property);
       if (this.hasTemplate('line4')) {
         // Render the line4 template
@@ -1200,6 +1204,12 @@ export class MgtPerson extends MgtTemplatedTaskComponent {
 
     details = this.personDetailsInternal || this.personDetails || this.fallbackDetails;
 
+    // load card data at this point
+    if (this.personCardInteraction !== 'none') {
+      // perform the batch requests and cache
+      void getPersonCardGraphData(graph, details, this.personQuery === 'me');
+    }
+
     // populate presence
     const defaultPresence: Presence = {
       activity: 'Offline',
@@ -1345,10 +1355,27 @@ export class MgtPerson extends MgtTemplatedTaskComponent {
   };
 
   private readonly handleKeyDown = (e: KeyboardEvent) => {
-    // enter activates person-card
+    const personEl = this.renderRoot.querySelector<HTMLElement>('.person-root');
+    // enter activates and focuses on person-card
     if (e) {
       if (e.key === 'Enter') {
         this.showPersonCard();
+        const flyout = this.flyout;
+        if (flyout?.isOpen) {
+          this._keyBoardFocus = debounce(() => {
+            const personCardEl = flyout.querySelector<HTMLElement>('.mgt-person-card');
+            personCardEl.setAttribute('tabindex', '0');
+            personCardEl.focus();
+          }, 500);
+          this._keyBoardFocus();
+        }
+        personEl.blur();
+      }
+      if (this.personCardInteraction !== 'none') {
+        if (e.key === 'Escape' && personEl) {
+          this.hidePersonCard();
+          personEl.focus();
+        }
       }
     }
   };

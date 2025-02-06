@@ -54,6 +54,7 @@ export const registerMgtLoginComponent = () => {
  * @class MgtLogin
  * @extends {MgtTemplatedTaskComponent}
  *
+ * @fires {CustomEvent<undefined>} updated - Fired when the component is updated
  * @fires {CustomEvent<undefined>} loginInitiated - Fired when login is initiated by the user
  * @fires {CustomEvent<undefined>} loginCompleted - Fired when login completes
  * @fires {CustomEvent<undefined>} loginFailed - Fired when login fails
@@ -242,10 +243,16 @@ export class MgtLogin extends MgtTemplatedTaskComponent {
 
     const provider = Providers.globalProvider;
     if (provider?.logout) {
-      const activeAccount = provider.getActiveAccount();
       await provider.logout();
+    }
+  };
+
+  private readonly completeLogout = () => {
+    const provider = Providers.globalProvider;
+    if (provider.state === ProviderState.SignedOut) {
       this.userDetails = null;
       if (provider.isMultiAccountSupportedAndEnabled) {
+        const activeAccount = provider.getActiveAccount();
         localStorage.removeItem(activeAccount?.id + this._userDetailsKey);
       }
       this.hideFlyout();
@@ -297,6 +304,9 @@ export class MgtLogin extends MgtTemplatedTaskComponent {
         }
         this.fireCustomEvent('loginCompleted');
       } else {
+        if (provider.logout) {
+          this.completeLogout();
+        }
         this.userDetails = null;
       }
     }
@@ -726,7 +736,7 @@ export class MgtLogin extends MgtTemplatedTaskComponent {
    * @memberof MgtLogin
    */
   private readonly onClick = (): void => {
-    if (this.userDetails && this._isFlyoutOpen) {
+    if (this.userDetails && this.flyout.isOpen) {
       this.hideFlyout();
     } else if (this.userDetails) {
       this.showFlyout();

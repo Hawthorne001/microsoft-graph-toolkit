@@ -86,6 +86,7 @@ export const registerMgtPersonCardComponent = () => {
  * @class MgtPersonCard
  * @extends {MgtTemplatedComponent}
  *
+ * @fires {CustomEvent<undefined>} updated - Fired when the component is updated
  * @fires {CustomEvent<null>} expanded - Fired when expanded details section is opened
  *
  * @cssprop --person-card-line1-font-size - {Length} Font size of line 1
@@ -529,6 +530,7 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
 
     if (this._windowHeight < 250) {
       this._smallView = true;
+      this.fireCustomEvent('smallView', null, true);
     }
     const tabLocker = this.lockTabNavigation
       ? html`<div @keydown=${this.handleEndOfCard} aria-label=${this.strings.endOfCard} tabindex="0" id="end-of-container"></div>`
@@ -593,7 +595,6 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
   protected renderPerson(): TemplateResult {
     return mgtHtml`
       <mgt-person
-        tabindex="0"
         class="person-image"
         .personDetails=${this.internalPersonDetails}
         .personImage=${this.getImage()}
@@ -650,7 +651,7 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
 
     // Chat
     let chat: TemplateResult;
-    if (userPerson?.userPrincipalName) {
+    if (userPerson?.userPrincipalName || userPerson?.mail) {
       ariaLabel = `${this.strings.chatButtonLabel} ${person.displayName}`;
       chat = html`
         <fluent-button class="icon"
@@ -662,20 +663,22 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
     }
 
     // Video
-
-    ariaLabel = `${this.strings.videoButtonLabel} ${person.displayName}`;
-    const video: TemplateResult = html`
-      <fluent-button class="icon"
-        aria-label=${ariaLabel}
-        @click=${this.videoCallUser}>
-        ${getSvg(SvgIcon.Video)}
-      </fluent-button>
-    `;
+    let video: TemplateResult;
+    if (userPerson?.userPrincipalName || userPerson?.mail) {
+      ariaLabel = `${this.strings.videoButtonLabel} ${person.displayName}`;
+      video = html`
+        <fluent-button class="icon"
+          aria-label=${ariaLabel}
+          @click=${this.videoCallUser}>
+          ${getSvg(SvgIcon.Video)}
+        </fluent-button>
+      `;
+    }
 
     // Call
     let call: TemplateResult;
-    if (userPerson.userPrincipalName) {
-      ariaLabel = `${this.strings.callButtonLabel} ${person.displayName}`;
+    if (this.hasPhone) {
+      ariaLabel = `${this.strings.callButtonLabel} ${userPerson.displayName}`;
       call = html`
          <fluent-button class="icon"
           aria-label=${ariaLabel}
@@ -989,15 +992,12 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
     // check if personDetail already populated
     if (this.personDetails) {
       const user = this.personDetails;
-      let id: string;
-      if (isUser(user)) {
-        id = user.userPrincipalName || user.id;
-      }
+      const userId = (user as Person).userPrincipalName || user.id;
 
       // if we have an id but no email, we should get data from the graph
       // in some graph calls, the user object does not contain the email
-      if (id && !getEmailFromGraphEntity(user)) {
-        const person = await getUserWithPhoto(graph, id);
+      if (userId && !getEmailFromGraphEntity(user)) {
+        const person = await getUserWithPhoto(graph, userId);
         this.personDetails = person;
         this.personImage = this.getImage();
       }
@@ -1040,9 +1040,11 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
       }
     }
 
+    const personId = this.personDetails?.id || (this.personDetails as Person)?.userPrincipalName;
+
     // populate state
-    if (this.personDetails?.id) {
-      this._cardState = await getPersonCardGraphData(graph, this.personDetails, this._me === this.personDetails.id);
+    if (personId) {
+      this._cardState = await getPersonCardGraphData(graph, this.personDetails, this._me === personId);
     }
 
     this.loadSections();
@@ -1095,8 +1097,8 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
   };
 
   private get hasPhone(): boolean {
-    const user = this.personDetails as User;
-    const person = this.personDetails as microsoftgraph.Person;
+    const user = this.internalPersonDetails as User;
+    const person = this.internalPersonDetails as Person;
     return Boolean(user?.businessPhones?.length) || Boolean(person?.phones?.length);
   }
 
@@ -1107,8 +1109,8 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
    * @memberof MgtPersonCard
    */
   protected callUser = () => {
-    const user = this.personDetails as User;
-    const person = this.personDetails as microsoftgraph.Person;
+    const user = this.internalPersonDetails as User;
+    const person = this.internalPersonDetails as Person;
 
     if (user?.businessPhones?.length) {
       const phone = user.businessPhones[0];
@@ -1162,8 +1164,8 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
    */
   protected videoCallUser = () => {
     const user = this.personDetails as User;
-    if (user?.userPrincipalName) {
-      const users: string = user.userPrincipalName;
+    if (user?.userPrincipalName || user?.mail) {
+      const users: string = user.userPrincipalName || user.mail;
 
       const url = `https://teams.microsoft.com/l/call/0/0?users=${users}&withVideo=true`;
 
@@ -1241,7 +1243,7 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
     }
 
     if (MgtPersonCardConfig.sections.files && files?.length) {
-      this.sections.push(new MgtFileList());
+      this.sections.push(new MgtFileList(files));
     }
 
     if (MgtPersonCardConfig.sections.profile && profile) {
@@ -1257,7 +1259,7 @@ export class MgtPersonCard extends MgtTemplatedTaskComponent implements IHistory
       return this.personImage;
     }
 
-    const person = this.personDetails;
+    const person = this.internalPersonDetails;
     return person?.personImage ? person.personImage : null;
   }
 

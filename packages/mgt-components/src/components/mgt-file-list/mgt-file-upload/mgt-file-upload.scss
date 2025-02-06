@@ -31,6 +31,11 @@ $file-upload-border-drag: var(--file-upload-border-drag, 1px dashed #0078d4);
     margin-top: 30px;
   }
 
+  .focus,
+  :focus {
+    outline: none;
+  }
+
   fluent-button {
     .upload-icon {
       path {
@@ -182,6 +187,8 @@ $file-upload-border-drag: var(--file-upload-border-drag, 1px dashed #0078d4);
   .file-upload-dialog-content {
     background-color: $file-upload-dialog-background-color;
     color: $file-upload-dialog-text-color;
+    z-index: 1;
+    position: relative;
   }
 
   .file-upload-dialog-content-text {
