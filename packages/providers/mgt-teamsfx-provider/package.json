@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/mgt-teamsfx-provider",
-  "version": "4.2.0",
+  "version": "4.4.0",
   "description": "The Microsoft Graph Toolkit TeamsFx Provider",
   "keywords": [
     "microsoft graph",
@@ -36,12 +36,12 @@
     "clean": "shx rm -rf ./dist && shx rm -rf ./tsconfig.tsbuildinfo",
     "compile": "tsc -b",
     "compile:watch": "tsc -w",
-    "lint": "eslint -c ../../../.eslintrc.js 'src/**/*.ts'",
+    "lint": "eslint -c ../../../.eslintrc.js \"src/**/*.ts\"",
     "postpack": "cpx *.tgz ../../../artifacts"
   },
   "sideEffects": false,
   "dependencies": {
-    "@azure/core-auth": "^1.6.0",
+    "@azure/core-auth": "^1.7.2",
     "@microsoft/mgt-element": "*"
   },
   "publishConfig": {

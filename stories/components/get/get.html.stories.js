@@ -27,13 +27,11 @@ export const GetEmail = () => html`
     <template>
       <div class="email" data-for="email in value">
         <h3>{{ email.subject }}</h3>
-        <h4>
-          <mgt-person
-            person-query="{{email.sender.emailAddress.address}}"
-            view="oneline"
-            person-card="hover"
-          ></mgt-person>
-        </h4>
+        <mgt-person
+          person-query="{{email.sender.emailAddress.address}}"
+          view="oneline"
+          person-card="none"
+        ></mgt-person>
         <div data-if="email.bodyPreview" class="preview" innerHtml>{{email.bodyPreview}}</div>
         <div data-else class="preview">
           email body is empty
@@ -206,4 +204,25 @@ softRefreshButton.addEventListener('click', softRefresh)
 
 hardRefreshButton.addEventListener('click', hardRefresh)
 </script>
+`;
+
+export const events = () => html`
+  <mgt-get resource="/me/messages" scopes="mail.read">
+    <template>
+      <pre>{{ JSON.stringify(value, null, 2) }}</pre>
+    </template>
+  </mgt-get>
+
+  <script>
+    const get = document.querySelector('mgt-get');
+    get.addEventListener('updated', e => {
+      console.log('updated', e);
+    });
+    get.addEventListener('dataChange', e => {
+      console.log('dataChange', e);
+    });
+    get.addEventListener('templateRendered', e => {
+      console.log('templateRendered', e);
+    });
+  </script>
 `;

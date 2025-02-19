@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/mgt-msal2-provider",
-  "version": "4.2.0",
+  "version": "4.4.0",
   "description": "The Microsoft Graph Toolkit Msal 2.0 Provider",
   "keywords": [
     "microsoft graph",
@@ -35,7 +35,7 @@
     "clean": "shx rm -rf ./dist && shx rm -rf ./tsconfig.tsbuildinfo",
     "compile": "tsc -b",
     "compile:watch": "tsc -w",
-    "lint": "eslint -c ../../../.eslintrc.js 'src/**/*.ts'",
+    "lint": "eslint -c ../../../.eslintrc.js \"src/**/*.ts\"",
     "postpack": "cpx *.tgz ../../../artifacts"
   },
   "sideEffects": [
@@ -45,7 +45,7 @@
   "dependencies": {
     "@azure/msal-browser": "^2.38.3",
     "@microsoft/mgt-element": "*",
-    "@microsoft/microsoft-graph-client": "3.0.2"
+    "@microsoft/microsoft-graph-client": "3.0.7"
   },
   "publishConfig": {
     "directory": "dist"

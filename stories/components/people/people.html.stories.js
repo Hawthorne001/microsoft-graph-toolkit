@@ -23,3 +23,17 @@ export const RTL = () => html`
     <mgt-people show-max="5"></mgt-people>
   </body>
 `;
+
+export const Events = () => html`
+<mgt-people people-queries="Megan Bowen"></mgt-people>
+<script>
+  const people = document.querySelector('mgt-people');
+  people.addEventListener('people-rendered', (e) => {
+    console.log("People rendered");
+  });
+  
+  people.addEventListener('updated', (e) => {
+    console.log("Updated");
+  });
+</script>
+`;

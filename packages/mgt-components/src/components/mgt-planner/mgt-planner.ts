@@ -73,6 +73,7 @@ export const registerMgtPlannerComponent = () => {
  * @class MgtPlanner
  * @extends {MgtBaseComponent}
  *
+ * @fires {CustomEvent<undefined>} updated - Fired when the component is updated
  * @fires {CustomEvent<ITask>} taskAdded - Fires when a new task has been created.
  * @fires {CustomEvent<ITask>} taskChanged - Fires when task metadata has been changed, such as marking completed.
  * @fires {CustomEvent<ITask>} taskClick - Fires when the user clicks or taps on a task.
@@ -592,12 +593,17 @@ export class MgtPlanner extends MgtTemplatedTaskComponent {
     await this._task.run();
   }
 
-  private async removeTask(task: ITask) {
+  private async removeTask(task: ITask, e: Event) {
     const ts = this.getTaskSource();
     if (!ts) {
       return;
     }
-
+    // check if e is a Keyboard Event
+    if (e instanceof KeyboardEvent) {
+      if (e.key !== 'Enter') {
+        return;
+      }
+    }
     this._hiddenTasks = [...this._hiddenTasks, task.id];
     await ts.removeTask(task);
     this.fireCustomEvent('taskRemoved', task);
@@ -1004,7 +1010,7 @@ export class MgtPlanner extends MgtTemplatedTaskComponent {
             <mgt-dot-options
               class="dot-options"
               .options="${{
-                [this.strings.removeTaskSubtitle]: () => this.removeTask(task)
+                [this.strings.removeTaskSubtitle]: (e: Event) => this.removeTask(task, e)
               }}"
             ></mgt-dot-options>`;
 

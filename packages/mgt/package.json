@@ -1,6 +1,6 @@
 {
   "name": "@microsoft/mgt",
-  "version": "4.2.0",
+  "version": "4.4.0",
   "description": "The Microsoft Graph Toolkit",
   "keywords": [
     "microsoft graph",
@@ -33,7 +33,7 @@
     "clean": "shx rm -rf ./dist && shx rm -rf ./tsconfig.tsbuildinfo",
     "compile": "tsc -b",
     "compile:watch": "tsc -w",
-    "lint": "eslint -c ../../.eslintrc.js 'src/**/*.ts'",
+    "lint": "eslint -c ../../.eslintrc.js \"src/**/*.ts\"",
     "postpack": "cpx *.tgz ../../artifacts",
     "rollup": "rollup -c"
   },
